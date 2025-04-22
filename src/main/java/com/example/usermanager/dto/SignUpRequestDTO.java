@@ -4,7 +4,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class LoginDTO {
+public class SignUpRequestDTO {
     private String name;
     private String email;
     private String password;
