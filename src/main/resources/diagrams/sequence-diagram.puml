@@ -1,0 +1,10 @@
+@startuml
+actor Cliente
+Cliente -> UserController : POST /sign-up
+UserController -> UserService : registerUser(request)
+UserService -> UserRepository : findByEmail()
+UserService -> UserRepository : save(user)
+UserService -> JWT Utility : generateToken(email)
+UserService --> UserController : UserResponseDTO
+UserController --> Cliente : Response 201 Created
+@enduml

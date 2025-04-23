@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+
 @RestController
 @RequestMapping("/api")
 @Tag(name = "User", description = "User endpoints")
@@ -18,7 +20,7 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/sign-up")
-    public ResponseEntity<UserResponseDTO> registerUser(@RequestBody SignUpRequestDTO request) {
+    public ResponseEntity<UserResponseDTO> registerUser(@Valid @RequestBody SignUpRequestDTO request) {
         UserResponseDTO response = userService.registerUser(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

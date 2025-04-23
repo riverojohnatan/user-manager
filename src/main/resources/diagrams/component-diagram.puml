@@ -1,0 +1,9 @@
+@startuml
+package "User Service" {
+  [UserController] --> [UserService]
+  [UserService] --> [UserRepository]
+  [UserService] --> [JWT Utility]
+  [UserService] --> [BCryptPasswordEncoder]
+  [UserService] --> [H2 Database]
+}
+@enduml

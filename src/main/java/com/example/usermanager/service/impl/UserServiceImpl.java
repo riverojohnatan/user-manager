@@ -3,16 +3,19 @@ package com.example.usermanager.service.impl;
 import com.example.usermanager.dto.SignUpRequestDTO;
 import com.example.usermanager.dto.PhoneDTO;
 import com.example.usermanager.dto.UserResponseDTO;
-import com.example.usermanager.entity.PhoneEntity;
-import com.example.usermanager.entity.UserEntity;
+import com.example.usermanager.entity.Phone;
+import com.example.usermanager.entity.User;
+import com.example.usermanager.exceptions.LoginException;
 import com.example.usermanager.repository.UserRepository;
 import com.example.usermanager.service.UserService;
+import com.example.usermanager.util.JWTUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+//import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -26,8 +29,11 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserRepository userRepository;
 
+    //@Autowired
+    //private BCryptPasswordEncoder passwordEncoder;
+
     @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+    private JWTUtil jwtUtil;
 
 
     @Override
@@ -43,19 +49,19 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("El usuario ya existe");
         }
 
-        UserEntity user = new UserEntity();
+        User user = new User();
         user.setId(UUID.randomUUID());
         user.setName(request.getName());
         user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        //user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setPassword(request.getPassword()); // We mustn't save plain password in DB, but for this example we should
         user.setCreated(LocalDateTime.now());
         user.setLastLogin(LocalDateTime.now());
-        user.setToken(UUID.randomUUID().toString()); // JWT se manejará luego
         user.setActive(true);
 
         if (request.getPhones() != null) {
-            List<PhoneEntity> phones = request.getPhones().stream().map(dto -> {
-                PhoneEntity phone = new PhoneEntity();
+            List<Phone> phones = request.getPhones().stream().map(dto -> {
+                Phone phone = new Phone();
                 phone.setNumber(dto.getNumber());
                 phone.setCityCode(dto.getCityCode());
                 phone.setCountryCode(dto.getCountryCode());
@@ -65,19 +71,42 @@ public class UserServiceImpl implements UserService {
             user.setPhones(phones);
         }
 
-        UserEntity saved = userRepository.save(user);
+        user.setToken(jwtUtil.generateToken(request.getEmail()));
 
+        User saved = userRepository.save(user);
+
+        return toResponseDTO(saved);
+    }
+
+    @Override
+    public UserResponseDTO loginUser(String bearerToken) {
+        String token = bearerToken.replace("Bearer ", "");
+        Optional<User> optionalUser = userRepository.findByToken(token);
+
+        if (optionalUser.isEmpty()) {
+            throw new LoginException("Token inválido o expirado");
+        }
+
+        User user = optionalUser.get();
+        user.setLastLogin(LocalDateTime.now());
+        User updatedUser = userRepository.save(user);
+
+        return toResponseDTO(updatedUser);
+    }
+
+    private UserResponseDTO toResponseDTO(User user) {
         UserResponseDTO response = new UserResponseDTO();
-        response.setId(saved.getId());
-        response.setCreated(saved.getCreated());
-        response.setLastLogin(saved.getLastLogin());
-        response.setToken(saved.getToken());
-        response.setActive(saved.isActive());
-        response.setName(saved.getName());
-        response.setEmail(saved.getEmail());
-        response.setPassword(request.getPassword());
-        if (saved.getPhones() != null) {
-            List<PhoneDTO> phoneDTOs = saved.getPhones().stream().map(phone -> {
+        response.setId(user.getId());
+        response.setCreated(user.getCreated());
+        response.setLastLogin(user.getLastLogin());
+        response.setActive(user.isActive());
+        response.setName(user.getName());
+        response.setEmail(user.getEmail());
+        response.setPassword(user.getPassword());
+        response.setToken(user.getToken());
+
+        if (user.getPhones() != null) {
+            List<PhoneDTO> phoneDTOs = user.getPhones().stream().map(phone -> {
                 PhoneDTO dto = new PhoneDTO();
                 dto.setNumber(phone.getNumber());
                 dto.setCityCode(phone.getCityCode());
@@ -87,11 +116,5 @@ public class UserServiceImpl implements UserService {
             response.setPhones(phoneDTOs);
         }
         return response;
-    }
-
-    @Override
-    public UserResponseDTO loginUser(String token) {
-        // Implementación futura con JWT
-        return null;
     }
 }

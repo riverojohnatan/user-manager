@@ -3,45 +3,42 @@ package com.example.usermanager.controller.advice;
 import com.example.usermanager.dto.errors.ErrorResponseDTO;
 import com.example.usermanager.exceptions.LoginException;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @org.springframework.web.bind.annotation.ControllerAdvice
-@Slf4j
 public class ControllerAdvice {
 
     @ExceptionHandler(value = Exception.class)
     @ApiResponse(description = "Structure of error", responseCode = "500|400|404|409")
     public ResponseEntity<ErrorResponseDTO> handleException(Exception e) {
-        log.error(e.getMessage());
-        return new ResponseEntity<>(ErrorResponseDTO.builder()
-                .message("Application throw an unknown error")
-                .code("UNKNOWN_ERROR")
-                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .build(), HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(new ErrorResponseDTO("Application throw an unknown error",
+                "UNKNOWN_ERROR", HttpStatus.INTERNAL_SERVER_ERROR.value()), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(value = IllegalArgumentException.class)
     @ApiResponse(description = "Wrong argument", responseCode = "400")
     public ResponseEntity<ErrorResponseDTO> handleException(IllegalArgumentException e) {
-        log.error(e.getMessage());
-        return new ResponseEntity<>(ErrorResponseDTO.builder()
-                .message("Some arguments are wrong or missing")
-                .code("INVALID_ARGUMENT")
-                .status(HttpStatus.BAD_REQUEST.value())
-                .build(), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(new ErrorResponseDTO("Some arguments are wrong or missing",
+                "INVALID_ARGUMENT", HttpStatus.BAD_REQUEST.value()), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponseDTO> handleValidationException(MethodArgumentNotValidException e) {
+        StringBuffer errors = new StringBuffer();
+        e.getBindingResult().getFieldErrors().forEach(err -> {
+            errors.append(err.getField()).append(": ").append(err.getDefaultMessage());
+        });
+        return new ResponseEntity<>(new ErrorResponseDTO(errors.toString(), "INVALID_ARGUMENT",
+                HttpStatus.BAD_REQUEST.value()), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(value = LoginException.class)
     @ApiResponse(description = "Wrong login", responseCode = "401")
     public ResponseEntity<ErrorResponseDTO> handleException(LoginException e) {
-        log.error(e.getMessage());
-        return new ResponseEntity<>(ErrorResponseDTO.builder()
-                .message(e.getMessage())
-                .code("WRONG_LOGIN")
-                .status(HttpStatus.UNAUTHORIZED.value())
-                .build(), HttpStatus.UNAUTHORIZED);
+        return new ResponseEntity<>(new ErrorResponseDTO(e.getMessage(), "WRONG_LOGIN",
+                HttpStatus.UNAUTHORIZED.value()), HttpStatus.UNAUTHORIZED);
     }
 }
