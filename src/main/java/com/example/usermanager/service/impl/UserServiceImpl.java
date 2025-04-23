@@ -13,7 +13,7 @@ import com.example.usermanager.repository.UserRepository;
 import com.example.usermanager.service.UserService;
 import com.example.usermanager.util.JWTUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -32,8 +32,8 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserRepository userRepository;
 
-    //@Autowired
-    //private BCryptPasswordEncoder passwordEncoder;
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
 
     @Autowired
     private JWTUtil jwtUtil;
@@ -56,8 +56,7 @@ public class UserServiceImpl implements UserService {
         user.setId(UUID.randomUUID());
         user.setName(request.getName());
         user.setEmail(request.getEmail());
-        //user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setPassword(request.getPassword()); // We mustn't save plain password in DB, but for this example we should
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setCreated(LocalDateTime.now());
         user.setLastLogin(LocalDateTime.now());
         user.setActive(true);
