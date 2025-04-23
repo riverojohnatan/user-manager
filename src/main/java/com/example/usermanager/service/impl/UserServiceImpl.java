@@ -5,7 +5,10 @@ import com.example.usermanager.dto.PhoneDTO;
 import com.example.usermanager.dto.UserResponseDTO;
 import com.example.usermanager.entity.Phone;
 import com.example.usermanager.entity.User;
+import com.example.usermanager.exceptions.DuplicateUserException;
 import com.example.usermanager.exceptions.LoginException;
+import com.example.usermanager.exceptions.WrongEmailException;
+import com.example.usermanager.exceptions.WrongPasswordException;
 import com.example.usermanager.repository.UserRepository;
 import com.example.usermanager.service.UserService;
 import com.example.usermanager.util.JWTUtil;
@@ -39,14 +42,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponseDTO registerUser(SignUpRequestDTO request) {
         if (!EMAIL_PATTERN.matcher(request.getEmail()).matches()) {
-            throw new IllegalArgumentException("Formato de email inválido");
+            throw new WrongEmailException("Formato de email inválido");
         }
         if (!PASSWORD_PATTERN.matcher(request.getPassword()).matches()) {
-            throw new IllegalArgumentException("Formato de contraseña inválido");
+            throw new WrongPasswordException("Formato de contraseña inválido");
         }
 
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("El usuario ya existe");
+            throw new DuplicateUserException("El usuario ya existe");
         }
 
         User user = new User();

@@ -1,7 +1,10 @@
 package com.example.usermanager.controller.advice;
 
 import com.example.usermanager.dto.errors.ErrorResponseDTO;
+import com.example.usermanager.exceptions.DuplicateUserException;
 import com.example.usermanager.exceptions.LoginException;
+import com.example.usermanager.exceptions.WrongEmailException;
+import com.example.usermanager.exceptions.WrongPasswordException;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,5 +43,26 @@ public class ControllerAdvice {
     public ResponseEntity<ErrorResponseDTO> handleException(LoginException e) {
         return new ResponseEntity<>(new ErrorResponseDTO(e.getMessage(), "WRONG_LOGIN",
                 HttpStatus.UNAUTHORIZED.value()), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(value = DuplicateUserException.class)
+    @ApiResponse(description = "Wrong login", responseCode = "401")
+    public ResponseEntity<ErrorResponseDTO> handleException(DuplicateUserException e) {
+        return new ResponseEntity<>(new ErrorResponseDTO(e.getMessage(), "DUPLICATE_USER",
+                HttpStatus.BAD_REQUEST.value()), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(value = WrongEmailException.class)
+    @ApiResponse(description = "Wrong login", responseCode = "401")
+    public ResponseEntity<ErrorResponseDTO> handleException(WrongEmailException e) {
+        return new ResponseEntity<>(new ErrorResponseDTO(e.getMessage(), "WRONG_EMAIL_FORMAT",
+                HttpStatus.BAD_REQUEST.value()), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(value = WrongPasswordException.class)
+    @ApiResponse(description = "Wrong login", responseCode = "401")
+    public ResponseEntity<ErrorResponseDTO> handleException(WrongPasswordException e) {
+        return new ResponseEntity<>(new ErrorResponseDTO(e.getMessage(), "WRONG_PASSWORD_FORMAT",
+                HttpStatus.BAD_REQUEST.value()), HttpStatus.BAD_REQUEST);
     }
 }
